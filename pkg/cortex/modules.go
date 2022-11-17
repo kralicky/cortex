@@ -244,7 +244,7 @@ func (t *Cortex) initTenantFederation() (serv services.Service, err error) {
 		// Make sure the mergeQuerier is only used for request with more than a
 		// single tenant. This allows for a less impactful enabling of tenant
 		// federation.
-		byPassForSingleQuerier := true
+		byPassForSingleQuerier := false
 		t.QuerierQueryable = querier.NewSampleAndChunkQueryable(tenantfederation.NewQueryable(t.QuerierQueryable, byPassForSingleQuerier))
 	}
 	return nil, nil
