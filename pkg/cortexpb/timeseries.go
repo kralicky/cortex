@@ -1,7 +1,6 @@
 package cortexpb
 
 import (
-	"flag"
 	"fmt"
 	"io"
 	"strings"
@@ -47,17 +46,6 @@ var (
 	}
 	bytePool = newSlicePool(20)
 )
-
-// PreallocConfig configures how structures will be preallocated to optimise
-// proto unmarshalling.
-type PreallocConfig struct{}
-
-// RegisterFlags registers configuration settings.
-func (PreallocConfig) RegisterFlags(f *flag.FlagSet) {
-	f.IntVar(&expectedTimeseries, "ingester-client.expected-timeseries", expectedTimeseries, "Expected number of timeseries per request, used for preallocations.")
-	f.IntVar(&expectedLabels, "ingester-client.expected-labels", expectedLabels, "Expected number of labels per timeseries, used for preallocations.")
-	f.IntVar(&expectedSamplesPerSeries, "ingester-client.expected-samples-per-series", expectedSamplesPerSeries, "Expected number of samples per timeseries, used for preallocations.")
-}
 
 // PreallocWriteRequest is a WriteRequest which preallocs slices on Unmarshal.
 type PreallocWriteRequest struct {
