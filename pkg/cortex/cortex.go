@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"reflect"
 	"strings"
 
 	"github.com/go-kit/log"
@@ -31,7 +30,6 @@ import (
 	configAPI "github.com/cortexproject/cortex/pkg/configs/api"
 	"github.com/cortexproject/cortex/pkg/configs/db"
 	"github.com/cortexproject/cortex/pkg/cortex/storage"
-	"github.com/cortexproject/cortex/pkg/cortexpb"
 	"github.com/cortexproject/cortex/pkg/distributor"
 	"github.com/cortexproject/cortex/pkg/flusher"
 	"github.com/cortexproject/cortex/pkg/frontend"
@@ -105,7 +103,6 @@ type Config struct {
 	Flusher          flusher.Config                  `yaml:"flusher"`
 	Storage          storage.Config                  `yaml:"storage"`
 	LimitsConfig     validation.Limits               `yaml:"limits"`
-	Prealloc         cortexpb.PreallocConfig         `yaml:"prealloc" doc:"hidden"`
 	Worker           querier_worker.Config           `yaml:"frontend_worker"`
 	Frontend         frontend.CombinedFrontendConfig `yaml:"frontend"`
 	QueryRange       queryrange.Config               `yaml:"query_range"`
@@ -151,7 +148,6 @@ func (c *Config) RegisterFlags(f *flag.FlagSet) {
 	c.Flusher.RegisterFlags(f)
 	c.Storage.RegisterFlags(f)
 	c.LimitsConfig.RegisterFlags(f)
-	c.Prealloc.RegisterFlags(f)
 	c.Worker.RegisterFlags(f)
 	c.Frontend.RegisterFlags(f)
 	c.QueryRange.RegisterFlags(f)
@@ -174,10 +170,6 @@ func (c *Config) RegisterFlags(f *flag.FlagSet) {
 // Validate the cortex config and returns an error if the validation
 // doesn't pass
 func (c *Config) Validate(log log.Logger) error {
-	if err := c.validateYAMLEmptyNodes(); err != nil {
-		return err
-	}
-
 	if c.HTTPPrefix != "" && !strings.HasPrefix(c.HTTPPrefix, "/") {
 		return errInvalidHTTPPrefix
 	}
@@ -234,33 +226,6 @@ func (c *Config) Validate(log log.Logger) error {
 
 func (c *Config) isModuleEnabled(m string) bool {
 	return util.StringsContain(c.Target, m)
-}
-
-// validateYAMLEmptyNodes ensure that no empty node has been specified in the YAML config file.
-// When an empty node is defined in YAML, the YAML parser sets the whole struct to its zero value
-// and so we loose all default values. It's very difficult to detect this case for the user, so we
-// try to prevent it (on the root level) with this custom validation.
-func (c *Config) validateYAMLEmptyNodes() error {
-	defaults := Config{}
-	flagext.DefaultValues(&defaults)
-
-	defStruct := reflect.ValueOf(defaults)
-	cfgStruct := reflect.ValueOf(*c)
-
-	// We expect all structs are the exact same. This check should never fail.
-	if cfgStruct.NumField() != defStruct.NumField() {
-		return errors.New("unable to validate configuration because of mismatching internal config data structure")
-	}
-
-	for i := 0; i < cfgStruct.NumField(); i++ {
-		// If the struct has been reset due to empty YAML value and the zero struct value
-		// doesn't match the default one, then we should warn the user about the issue.
-		if cfgStruct.Field(i).Kind() == reflect.Struct && cfgStruct.Field(i).IsZero() && !defStruct.Field(i).IsZero() {
-			return fmt.Errorf("the %s configuration in YAML has been specified as an empty YAML node", cfgStruct.Type().Field(i).Name)
-		}
-	}
-
-	return nil
 }
 
 func (c *Config) registerServerFlagsWithChangedDefaultValues(fs *flag.FlagSet) {
