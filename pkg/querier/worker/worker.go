@@ -28,7 +28,7 @@ type Config struct {
 	MatchMaxConcurrency   bool `yaml:"match_max_concurrent"`
 	MaxConcurrentRequests int  `yaml:"-"` // Must be same as passed to PromQL Engine.
 
-	QuerierID string `yaml:"id"`
+	QuerierID string `yaml:"id,omitempty"`
 
 	GRPCClientConfig grpcclient.Config `yaml:"grpc_client_config"`
 
