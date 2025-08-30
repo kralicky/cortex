@@ -47,8 +47,8 @@ type LifecyclerConfig struct {
 
 	// For testing, you can override the address and ID of this ingester
 	Addr string `yaml:"address" doc:"hidden"`
-	Port int    `doc:"hidden"`
-	ID   string `doc:"hidden"`
+	Port int    `yaml:"port,omitempty" doc:"hidden"`
+	ID   string `yaml:"id,omitempty" doc:"hidden"`
 
 	// Injected internally
 	ListenPort int `yaml:"-"`
